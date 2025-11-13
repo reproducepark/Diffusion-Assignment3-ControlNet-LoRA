@@ -59,7 +59,17 @@ def zero_convolution(
     # DO NOT change the code outside this part.
     # Return a zero-convolution layer,
     # with the weight & bias initialized as zeros.
-    module = None
+    module = nn.Conv2d(
+        in_channels=in_channels,
+        out_channels=out_channels,
+        kernel_size=kernel_size,
+        stride=stride,
+        padding=padding,
+        bias=False
+    )
+
+    # weight를 0으로 초기화
+    nn.init.zeros_(module.weight)
     ######## TODO (1) ########
 
     return module
@@ -459,7 +469,17 @@ class ControlNetModel(ModelMixin, ConfigMixin, FromOriginalModelMixin):
         # DO NOT change the code outside this part.
         # Initialize 'controlnet' using the pretrained 'unet' model
         # NOTE: Modules to initialize: 'conv_in', 'time_proj', 'time_embedding', 'down_blocks', 'mid_block'
-
+        # 1) conv_in
+        controlnet.conv_in.load_state_dict(unet.conv_in.state_dict())
+        # 2) time_proj (usually has no learnable params, but keep for completeness)
+        controlnet.time_proj.load_state_dict(unet.time_proj.state_dict())
+        # 3) time_embedding (shape-compatible subset; allow extra/missing keys)
+        controlnet.time_embedding.load_state_dict(unet.time_embedding.state_dict())
+        # 4) down_blocks
+        for controlnet_block, unet_block in zip(controlnet.down_blocks, unet.down_blocks):
+            controlnet_block.load_state_dict(unet_block.state_dict())
+        # 5) mid_block
+        controlnet.mid_block.load_state_dict(unet.mid_block.state_dict())
         ######## TODO (2) ########
 
         return controlnet
