@@ -346,6 +346,7 @@ class ControlNetModel(ModelMixin, ConfigMixin, FromOriginalModelMixin):
 
         # down
         output_channel = block_out_channels[0]
+        # down block에 사용할 zero convolution 모듈 생성
         controlnet_block = zero_convolution(output_channel, output_channel, kernel_size=1)
 
         self.controlnet_down_blocks.append(controlnet_block)
@@ -386,6 +387,8 @@ class ControlNetModel(ModelMixin, ConfigMixin, FromOriginalModelMixin):
 
         # mid
         mid_block_channel = block_out_channels[-1]
+
+        # mid block에 사용할 zero convolution 모듈 생성
         controlnet_block = zero_convolution(mid_block_channel, mid_block_channel, kernel_size=1)
 
         self.controlnet_mid_block = controlnet_block
@@ -469,15 +472,21 @@ class ControlNetModel(ModelMixin, ConfigMixin, FromOriginalModelMixin):
         # DO NOT change the code outside this part.
         # Initialize 'controlnet' using the pretrained 'unet' model
         # NOTE: Modules to initialize: 'conv_in', 'time_proj', 'time_embedding', 'down_blocks', 'mid_block'
+
+        # NOTE에 표시된 각각에 대해 unet의 모델 파라미터를 가져옴
         # 1) conv_in
         controlnet.conv_in.load_state_dict(unet.conv_in.state_dict())
-        # 2) time_proj (usually has no learnable params, but keep for completeness)
+
+        # 2) time_proj
         controlnet.time_proj.load_state_dict(unet.time_proj.state_dict())
-        # 3) time_embedding (shape-compatible subset; allow extra/missing keys)
+
+        # 3) time_embedding
         controlnet.time_embedding.load_state_dict(unet.time_embedding.state_dict())
+
         # 4) down_blocks
         for controlnet_block, unet_block in zip(controlnet.down_blocks, unet.down_blocks):
             controlnet_block.load_state_dict(unet_block.state_dict())
+
         # 5) mid_block
         controlnet.mid_block.load_state_dict(unet.mid_block.state_dict())
         ######## TODO (2) ########
@@ -724,11 +733,11 @@ class ControlNetModel(ModelMixin, ConfigMixin, FromOriginalModelMixin):
 
         # 2. Pre-process
         sample = self.conv_in(sample)
-
         controlnet_cond = self.controlnet_cond_embedding(controlnet_cond)
         sample = sample + controlnet_cond
 
         # -------------------- 4. Down Blocks -------------------- #
+        # 
         down_block_res_samples = (sample,)
 
         for downsample_block in self.down_blocks:
@@ -765,8 +774,11 @@ class ControlNetModel(ModelMixin, ConfigMixin, FromOriginalModelMixin):
         # Apply zero-convolution to the residual features of each ControlNet block.
         # NOTE: Each 'controlnet_block' is used here.
 
-        down_block_res_samples = None
-        mid_block_res_sample = None
+        down_block_res_samples = [
+            controlnet_block(res_sample)
+            for controlnet_block, res_sample in zip(self.controlnet_down_blocks, down_block_res_samples)
+        ]
+        mid_block_res_sample = self.controlnet_mid_block(sample)
 
         ######## TODO (3) ########
 
