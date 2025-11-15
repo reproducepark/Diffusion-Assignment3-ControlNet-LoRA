@@ -65,11 +65,13 @@ def zero_convolution(
         kernel_size=kernel_size,
         stride=stride,
         padding=padding,
-        bias=False
+        bias=True
     )
 
     # weight를 0으로 초기화
     nn.init.zeros_(module.weight)
+    # bias를 0으로 초기화
+    nn.init.zeros_(module.bias)
     ######## TODO (1) ########
 
     return module
