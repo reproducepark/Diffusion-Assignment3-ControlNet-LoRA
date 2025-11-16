@@ -134,7 +134,18 @@ def log_validation(
                     ]
                 }
             )
+    phase_name = "test" if is_final_validation else "validation"
+    save_dir = os.path.join(args.output_dir, phase_name)
+    os.makedirs(save_dir, exist_ok=True)
 
+    for i, img in enumerate(images):
+        if is_final_validation:
+            filename = f"final_epoch_{epoch:04d}_img_{i}.png"
+        else:
+            filename = f"epoch_{epoch:04d}_img_{i}.png"
+        save_path = os.path.join(save_dir, filename)
+        img.save(save_path)
+    
     del pipeline
     torch.cuda.empty_cache()
 
