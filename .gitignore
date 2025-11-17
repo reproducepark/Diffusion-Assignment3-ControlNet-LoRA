@@ -1,10 +1,14 @@
 # Task 1
 task_1_controlnet/runs
+task_1_controlnet/outputs
+task_1_controlnet/diffusion/__pycache__
 
 # Task 2
+task_2_lora/__pycache__
 task_2_lora/runs
 task_2_lora/sample_data/dreambooth-slipper-class
 task_2_lora/sample_data/dreambooth-elon
 task_2_lora/sample_data/dreambooth-cat2
 task_2_lora/sample_data/dreambooth-rc_car
 task_2_lora/outputs
+task_2_lora/sample_data/dreambooth-slipper
